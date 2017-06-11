@@ -4,6 +4,7 @@ const XML = Promise.promisifyAll(require('xml-js'));
 const request = Promise.promisifyAll(require('request'));
 const AdvError = require('./errors.js');
 const querystring = require('querystring');
+const MjpegConsumer = require("mjpeg-consumer");
 
 module.exports = class NodeFoscam {
     constructor(options) {
@@ -11,6 +12,7 @@ module.exports = class NodeFoscam {
         this._port = options.port || 88;
         this._usr = options.usr || 'admin';
         this._pwd = options.pwd || '';
+        this.consumer = new MjpegConsumer();
     }
     _sendCommand(params) {
         let url = this._buildUrl(params)
@@ -134,5 +136,9 @@ module.exports = class NodeFoscam {
     }
     getMjpegEndpoint(){
       return this._buildUrl("cmd=GetMJStream");
+    }
+    pipeMjpegStream(recipient){
+      var url = this.getMjpegEndpoint();
+      request(url).pipe(this.consumer).pipe(recipient)
     }
 }
