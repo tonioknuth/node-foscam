@@ -132,4 +132,7 @@ module.exports = class NodeFoscam {
     getMjpegStream(){
       return this._sendCommand("cmd=GetMJStream");
     }
+    getMjpegEndpoint(){
+      return this._buildUrl("cmd=GetMJStream");
+    }
 }
