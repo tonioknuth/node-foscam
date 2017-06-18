@@ -4,19 +4,18 @@ const XML = Promise.promisifyAll(require('xml-js'));
 const request = Promise.promisifyAll(require('request'));
 const AdvError = require('./errors.js');
 const querystring = require('querystring');
-const MjpegConsumer = require("mjpeg-consumer");
+const rstp = require('rstp-ffmpeg')
 
 module.exports = class NodeFoscam {
     constructor(options) {
         this._hostname = options.host || 'localhost';
         this._port = options.port || 88;
+        this._rstp_port = options.rstp_port || 554;
         this._usr = options.usr || 'admin';
         this._pwd = options.pwd || '';
-        this.consumer = new MjpegConsumer();
     }
     _sendCommand(params) {
         let url = this._buildUrl(params)
-        console.log(url);
         return request.getAsync({
             url: url,
             //  headers: {
@@ -35,6 +34,9 @@ module.exports = class NodeFoscam {
         let path = this._hostname + ':'+ this._port+ '/cgi-bin/CGIProxy.fcgi?';
         let end = '&usr=' + this._usr + '&pwd=' + this._pwd;
         return path + params + end;
+    }
+    buildMainVideoUrl(){
+      return "rstp://"+this._usr+":"+this._pwd+"@"+this._hostname+":"+this._rstp_port+"/videoMain";
     }
     takePicture(){
       return this._sendCommand("cmd=snapPicture2");
@@ -137,8 +139,16 @@ module.exports = class NodeFoscam {
     getMjpegEndpoint(){
       return this._buildUrl("cmd=GetMJStream");
     }
-    pipeMjpegStream(recipient){
-      var url = this.getMjpegEndpoint();
-      request(url).pipe(this.consumer).pipe(recipient)
+    getMainVideoStream(){
+      var url = this.buildMainVideoUrl();
+      console.log(url);
+      this.stream = new rtsp.FFMpeg({input: url});
+      this.stream.on('start', function() {
+			console.log('started streaming data from: ' + url);
+		  });
+		  this.stream.on('stop', function() {
+			console.log('stopped streaming data from: ' + url);
+		  });
+      return this.stream
     }
 }
