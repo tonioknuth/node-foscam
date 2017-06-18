@@ -4,7 +4,7 @@ const XML = Promise.promisifyAll(require('xml-js'));
 const request = Promise.promisifyAll(require('request'));
 const AdvError = require('./errors.js');
 const querystring = require('querystring');
-const rstp = require('rstp-ffmpeg')
+const rtsp = require('rtsp-ffmpeg');
 
 module.exports = class NodeFoscam {
     constructor(options) {
@@ -31,12 +31,12 @@ module.exports = class NodeFoscam {
         });
     }
     _buildUrl(params) {
-        let path = this._hostname + ':'+ this._port+ '/cgi-bin/CGIProxy.fcgi?';
+        let path = "http://"+ this._hostname + ':'+ this._port+ '/cgi-bin/CGIProxy.fcgi?';
         let end = '&usr=' + this._usr + '&pwd=' + this._pwd;
         return path + params + end;
     }
     buildMainVideoUrl(){
-      return "rstp://"+this._usr+":"+this._pwd+"@"+this._hostname+":"+this._rstp_port+"/videoMain";
+      return "rtsp://"+this._usr+":"+this._pwd+"@"+this._hostname+":"+this._rstp_port+"/videoMain";
     }
     takePicture(){
       return this._sendCommand("cmd=snapPicture2");
